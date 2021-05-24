@@ -13,7 +13,7 @@
 </head>
 <body>
     <h2>Passwordless API with ASP.NET</h2>
-    <p>To run this example you must first add yor API key in index.html and your API Secret in app.js</p>
+    <p>To run this example you must first add yor API key in index.html and your API Secret in PasswordlessController.cs</p>
     <p><a href="https://docs.passwordless.dev/guide/getting-started.html#introduction">Documentation</a> - <a href="https://beta.passwordless.dev/create-account">Get your API keys</a></p>
 
     <input type="text" id="username" placeholder="username or userid" />
@@ -38,7 +38,7 @@
       Status("Welcome! Please register or sign in");
 
       if(API_KEY === "YOUR_API_KEY") {
-        Status("WARNING: Please change the API_KEY in index.html and API_KEY_SECRET in app.js before running the example.")
+        Status("WARNING: Please change the API_KEY in index.html and API_KEY_SECRET in PasswordlessController.cs before running the example.")
       }
     </script>
     <script>
@@ -57,7 +57,7 @@
         });
 
         /**
-         * Create token - Call your node backend to retrieve a token that we can use client-side to register a key to a username
+         * Create token - Call your asp.net backend to retrieve a token that we can use client-side to register a key to a username
          */
         const myToken = await fetch(
           "/create-token?username=" + username
@@ -108,7 +108,7 @@
 
           const token = await p.signin(username);
           /**
-           * Verify the sign in - Call your node backend to verify the token created from the sign in
+           * Verify the sign in - Call your asp.net backend to verify the token created from the sign in
            */
           const user = await fetch("/verify-signin?token=" + token).then((r) =>
             r.json()

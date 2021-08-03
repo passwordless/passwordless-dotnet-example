@@ -16,10 +16,10 @@ namespace passwordless_dotnet_example
         public PasswordlessController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://api.passwordless.dev/");
+            _httpClient.BaseAddress = new Uri("https://apiv2.passwordless.dev/");
             _httpClient.DefaultRequestHeaders.Add("ApiSecret", API_SECRET);
 
-            if(API_SECRET == "YOUR_API_SECRET") { throw new Exception("Please set your API SECRET"); }
+            if (API_SECRET == "YOUR_API_SECRET") { throw new Exception("Please set your API SECRET"); }
 
         }
 
@@ -33,25 +33,45 @@ namespace passwordless_dotnet_example
         /// This allows you to control the process, perhaps you only want to allow new users to register or only allow already signed in users to add a Key to their own account.
         /// 
         /// Request body looks like:
-        ///  { username: 'anders', displayName:'Anders Åberg'}
+        ///  { UserId: '123', displayName:'Anders Åberg', username: "anders@user.com"}
         ///  Response body looks like:
         ///  "abcdefghiojklmnopq..."
         /// 
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="alias"></param>
         /// <returns></returns>
         [HttpGet("/create-token")]
-        public async Task<ActionResult<string>> GetRegisterToken(string username)
+        public async Task<ActionResult<string>> GetRegisterToken(string alias)
         {
             
+            string userId = Guid.NewGuid().ToString();
+
             var json = JsonSerializer.Serialize(new
             {
-                username
+                userId = userId,
+                username = alias,
+                DisplayName = "Mr Guest"
             });
 
             var request = await _httpClient.PostAsync("register/token", new StringContent(json, Encoding.UTF8, "application/json"));
             request.EnsureSuccessStatusCode();
             var token = await request.Content.ReadAsStringAsync();
+
+            // Also add a alias so we can initiate sign in without userid
+            try
+            {
+                var aliasJson = JsonSerializer.Serialize(new
+                {
+                    userId = userId,
+                    aliases = new string[] { alias }
+                });
+                var aliasRequest = await _httpClient.PostAsync("alias", new StringContent(aliasJson, Encoding.UTF8, "application/json"));
+                aliasRequest.EnsureSuccessStatusCode();
+            }
+            catch(Exception) {
+                // Alias was already registered, please use a unique alias
+                throw;
+            }
 
             return token;
         }
@@ -108,7 +128,7 @@ namespace passwordless_dotnet_example
             }
             public bool Success { get; set; }
 
-            public string Username { get; set; }
+            public string UserId { get; set; }
             public DateTime Timestamp { get; set; }
             public string RPID { get; set; }
             public string Origin { get; set; }

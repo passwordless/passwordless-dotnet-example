@@ -16,7 +16,7 @@ namespace passwordless_dotnet_example
         public PasswordlessController()
         {
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://apiv2.passwordless.dev/");
+            _httpClient.BaseAddress = new Uri("https://v3.passwordless.dev/");
             _httpClient.DefaultRequestHeaders.Add("ApiSecret", API_SECRET);
 
             if (API_SECRET == "YOUR_API_SECRET") { throw new Exception("Please set your API SECRET"); }

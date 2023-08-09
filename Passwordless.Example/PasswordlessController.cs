@@ -1,27 +1,19 @@
 ﻿using System;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Passwordless.Example.Models;
+using Passwordless.Net;
 
 namespace Passwordless.Example;
 
 [ApiController]
 public class PasswordlessController : Controller
 {
-    private const string API_SECRET = "<YOUR_API_SECRET>"; // Replace with your API secret
-    private readonly HttpClient _httpClient;
+    private readonly IPasswordlessClient _passwordlessClient;
 
-    public PasswordlessController()
+    public PasswordlessController(IPasswordlessClient passwordlessClient)
     {
-        _httpClient = new HttpClient();
-        _httpClient.BaseAddress = new Uri("https://v4.passwordless.dev/");
-        _httpClient.DefaultRequestHeaders.Add("ApiSecret", API_SECRET);
-
-        if (API_SECRET == "<YOUR_API_SECRET>") throw new InvalidOperationException("Please set your API SECRET");
+        _passwordlessClient = passwordlessClient;
     }
 
 
@@ -41,27 +33,25 @@ public class PasswordlessController : Controller
     {
         var userId = Guid.NewGuid().ToString();
 
-        var payload = new
+        var payload = new RegisterOptions
         {
-            userId,
-            username = alias,
-            Aliases = new[] { alias }
+            UserId = userId,
+            Username = alias,
+            Aliases = new HashSet<string> { alias }
         };
 
-        var request = await _httpClient.PostAsJsonAsync("register/token", payload);
-
-        if (request.IsSuccessStatusCode)
+        try
         {
-            var token = await request.Content.ReadFromJsonAsync<TokenResponse>();
+            var token = await _passwordlessClient.CreateRegisterTokenAsync(payload);
             return Ok(token);
         }
-
-        // Handle or log any API error
-        var error = await request.Content.ReadFromJsonAsync<ProblemDetails>();
-        return new JsonResult(error)
+        catch (PasswordlessApiException e)
         {
-            StatusCode = (int)request.StatusCode
-        };
+            return new JsonResult(e.Details)
+            {
+                StatusCode = (int)e.StatusCode,
+            };
+        }
     }
 
 
@@ -79,29 +69,17 @@ public class PasswordlessController : Controller
     [Route("/verify-signin")]
     public async Task<IActionResult> VerifySignInToken(string token)
     {
-        var payload = new
+        try
         {
-            token
-        };
-
-        var request = await _httpClient.PostAsJsonAsync("signin/verify",payload);
-
-        if (request.IsSuccessStatusCode)
-        {
-            var signin = await request.Content.ReadFromJsonAsync<SigninResponse>();
-            if (signin.Success)
-            {
-                // Set cookie etc.
-            }
-
-            return Ok(signin);
+            var verifiedUser = await _passwordlessClient.VerifyTokenAsync(token);
+            return Ok(verifiedUser);
         }
-
-        // Handle or log any API error
-        var error = await request.Content.ReadFromJsonAsync<ProblemDetails>();
-        return new JsonResult(error)
+        catch (PasswordlessApiException e)
         {
-            StatusCode = (int)request.StatusCode
-        };
+            return new JsonResult(e.Details)
+            {
+                StatusCode = (int)e.StatusCode
+            };
+        }
     }
 }

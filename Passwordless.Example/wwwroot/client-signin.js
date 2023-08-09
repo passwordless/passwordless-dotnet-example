@@ -9,6 +9,7 @@ async function handleSigninClick(e) {
      */
     const p = new Passwordless.Client({
         apiKey: API_KEY,
+        apiUrl: PASSWORDLESS_API_URL // optional parameter, defaults to 'https://v4.passwordless.dev' if not set. Only set this for self-hosting.
     });
 
     try {

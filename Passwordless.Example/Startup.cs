@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Passwordless;
 using Passwordless.Net;
 
 namespace Passwordless.Example;
@@ -25,10 +26,9 @@ public class Startup
         services.AddControllers();
         
         // Inject the Passwordless SDK
-        services.Configure<PasswordlessOptions>(Configuration.GetRequiredSection("Passwordless"));
         services.AddPasswordlessSdk(options =>
         {
-            options = Configuration.GetRequiredSection("Passwordless") as PasswordlessOptions;
+            Configuration.GetRequiredSection("Passwordless").Bind(options);
         });
     }
 

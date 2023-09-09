@@ -33,10 +33,8 @@ public class PasswordlessController : Controller
     {
         var userId = Guid.NewGuid().ToString();
 
-        var payload = new RegisterOptions
+        var payload = new RegisterOptions(userId, alias)
         {
-            UserId = userId,
-            Username = alias,
             Aliases = new HashSet<string> { alias }
         };
 
@@ -49,7 +47,7 @@ public class PasswordlessController : Controller
         {
             return new JsonResult(e.Details)
             {
-                StatusCode = (int)e.StatusCode,
+                StatusCode = (int?)e.StatusCode,
             };
         }
     }
